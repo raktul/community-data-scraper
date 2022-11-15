@@ -9,7 +9,7 @@ require_once '../DBConnection.php';
  * 'length' it is required for the length of varchars, and int vs bigint
  * 'isNullable' optional setting this value will make it a nullable field
  */
-function createTableFromNameAndColumns($tableName, $columnList){
+function createTableFromNameAndColumns($tableName, $columnList){// SQL Generation
     $tableName = getFormatedName($tableName);
     $sqlTableCreate = mysqlTableCreateFromName($tableName);
     foreach($columnList as $v){
@@ -25,11 +25,11 @@ function createTableFromNameAndColumns($tableName, $columnList){
     }
 }
 // Part one of creating the table starts the query with table name
-function mysqlTableCreateFromName($name){
+function mysqlTableCreateFromName($name){// SQL Generation
     return "CREATE TABLE IF NOT EXISTS `$name` (";
 }
 // Part 2 of creating the table, by adding the column names
-function mysqlAddColumn($array){
+function mysqlAddColumn($array){// SQL Generation
     if($array['name'] === ''){
         return "`drop_trash` varchar(0) DEFAULT NULL, ";
     }
@@ -46,7 +46,7 @@ function mysqlAddColumn($array){
     return "`{$array['name']}` {$array['type']} $nullable, ";
 }
 // format string into lowercase snake case string 
-function getFormatedName($string){
+function getFormatedName($string){// SQL Generation
     // @TODO: improve this regex to include converting spaces to underscores
     $string = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $string));
     $array = explode(' ',trim($string));
@@ -57,14 +57,14 @@ function getFormatedName($string){
     return $column;
 }
 // single call to add KVP to column list array 
-function addToColumnList($columnList, $key, $name, $value){
+function addToColumnList($columnList, $key, $name, $value){// SQL Generation
     $columnList = startColumnList($columnList, $key, $name);
     $columnList = updateColumnList($columnList, $key, $value);
     return $columnList;
 }
 
 // starts the column list by passing in a name and setting default length to 0
-function startColumnList($columnList, $key, $name){
+function startColumnList($columnList, $key, $name){// SQL Generation
     $columnName = getFormatedName($name);
     $columnList[$key]['name'] = $columnName;
     if(!isset($columnList[$key]['length'])){
@@ -74,7 +74,7 @@ function startColumnList($columnList, $key, $name){
 }
 
 // finish the column list by checking value type, identifying if it is nullable, and updating length
-function updateColumnList($columnList, $key, $value){
+function updateColumnList($columnList, $key, $value){// SQL Generation
     if(is_null($value)){
         $columnList[$key]['isNullable'] = true;
     }else{
@@ -103,7 +103,7 @@ function updateColumnList($columnList, $key, $value){
     return $columnList;
 }
 // Identify what kind of variable is in each column
-function identifyField($field){
+function identifyField($field){// SQL Generation
     $array = array();
     $array['value'] = $field;
     $array['length'] = strlen($field);
@@ -147,7 +147,7 @@ function identifyField($field){
 }
 
 // Creating the insert query
-function mysqlInsertStart($name, $columnList){
+function mysqlInsertStart($name, $columnList){// SQL Generation
     $sql = "INSERT INTO `$name` (";
     foreach($columnList as $column){
         $sql .= "`{$column['name']}`,";
@@ -155,7 +155,7 @@ function mysqlInsertStart($name, $columnList){
     return substr($sql, 0, -1).") VALUES ";
 }
 
-function getCorrectInsertFormat($initialValue, $column, $connection){
+function getCorrectInsertFormat($initialValue, $column, $connection){// SQL Generation
     if(isset($column["isNullable"]) && ($initialValue === '' || is_null($initialValue))){
         return "NULL,";
     }
@@ -178,12 +178,12 @@ function getCorrectInsertFormat($initialValue, $column, $connection){
     return "'{$connection->real_escape_string($insertValue)}',";
 }
 
-function getJsonFileContent($fileName){
+function getJsonFileContent($fileName){//scraper
     $file = file_get_contents($fileName);
     return json_decode($file, true);
 }
 
-function getUrlContent($url, $method, $cookie = null, $fields = null, $responseHeader = false){
+function getUrlContent($url, $method, $cookie = null, $fields = null, $responseHeader = false){//scraper
     $url = trim($url);
     $ch = curl_init();// Initialize a connection with cURL (ch = cURL handle, or "channel")
     curl_setopt($ch, CURLOPT_URL, $url);// Set the URL
@@ -237,7 +237,7 @@ function scrapeRecordsByStreet($streetList, $neighborhoodName){
 }
 
 // recursive function for getting all the records for the street
-function useStreetNameForCurlQuery($streetName, $page, $records = array()){
+function useStreetNameForCurlQuery($streetName, $page, $records = array()){//scraper
     $street = strtolower($streetName);
     $file = "./json/$street-$page.json";
     if(file_exists($file)){
@@ -265,7 +265,7 @@ function useStreetNameForCurlQuery($streetName, $page, $records = array()){
     return $records;
 }
 
-function getCommunityRecords($records, $recordOut, $neighborhoodName, &$columnList){
+function getCommunityRecords($records, $recordOut, $neighborhoodName, &$columnList){//Parser
     foreach($records as $values){
         $possibleRecord = [];
         // I am only expecting a single neighbor hood to be set up, so this is a single string comparison
@@ -302,7 +302,7 @@ function getCommunityRecords($records, $recordOut, $neighborhoodName, &$columnLi
     return $recordOut;
 }
 
-function scrapeIndividualAssessorRecords($year){
+function scrapeIndividualAssessorRecords($year){//scraper
     echo "<br/><br/>Starting to get individual property records inside function scrapeIndividualAssessorRecords<br/><br/>";
     $assessorRecords = getAssessorRecords();
     $columnListAppeals = $columnListOwners = $columnListAddresses = $columnListValuesByAbstractCode = $columnListSales = $columnListBuildings = $columnListBuildingPermitAuthority = $columnListSubdivision = $columnListTaxAuthorities = $columnListLandAttributes = $columnListLandSegments = $columnListAccounts = array();
@@ -352,7 +352,7 @@ function scrapeIndividualAssessorRecords($year){
     genericInsert($tablePrefix.'TaxAuthorities', $columnListTaxAuthorities, $recordTaxAuthorities);
 }
 
-function genericParseListArray($array, $accountNumber, $columnList, $recordList){
+function genericParseListArray($array, $accountNumber, $columnList, $recordList){//Parser
     $record = array();
     if(empty($array)){
         return [$columnList, $recordList];
@@ -364,7 +364,7 @@ function genericParseListArray($array, $accountNumber, $columnList, $recordList)
     return [$columnList, $recordList];
 }
 
-function genericParseArray($array, $accountNumber, $columnList, $record){
+function genericParseArray($array, $accountNumber, $columnList, $record){//Parser
     if(empty($array)){
         return [$columnList, $record];
     }
@@ -388,7 +388,7 @@ function genericParseArray($array, $accountNumber, $columnList, $record){
     return [$columnList, $record];
 }
 // the same as genericParseArray, but do not need to pass in account number
-function genericSimpleParseArray($array, $columnList, $record){
+function genericSimpleParseArray($array, $columnList, $record){//Parser
     if(empty($array)){
         return [$columnList, $record];
     }
@@ -410,7 +410,7 @@ function genericSimpleParseArray($array, $columnList, $record){
     return [$columnList, $record];
 }
 
-function genericInsert($tableName, $columnList, $record){
+function genericInsert($tableName, $columnList, $record){// SQL Generation
     if(empty($record)){
          return false;
     }
@@ -423,7 +423,7 @@ function genericInsert($tableName, $columnList, $record){
     }
 }
 
-function addRecordsToInsertQuery($columnList, $record, $sqlInsert){
+function addRecordsToInsertQuery($columnList, $record, $sqlInsert){// SQL Generation
     $connection = DatabaseConnection::getConnection();
     if(!array_is_list($record)){
         $sqlInsert .= "(";
@@ -453,7 +453,7 @@ function addRecordsToInsertQuery($columnList, $record, $sqlInsert){
     }
 }
 
-function pullOutCookie($result){
+function pullOutCookie($result){//scraper
     preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $result, $matchFound);
     $cookies = array();
     foreach($matchFound[1] as $item) {
@@ -463,7 +463,7 @@ function pullOutCookie($result){
     return $cookies;
 }
 
-function getWellPermitsInArea($neighborhood){
+function getWellPermitsInArea($neighborhood){//scraper
     echo "<br/><br/>Starting to get well permit records for within 2 miles of {$neighborhood} inside function getWellPermitsInArea<br/><br/>";
     $file = "./json/well-permits-{$neighborhood}.json";
     if(file_exists($file)){
@@ -492,7 +492,7 @@ function getWellPermitsInArea($neighborhood){
     }
 }
 // removes table columns with empty varchars or a single distinct value
-function cleanUpDatabaseTablesEmptyColumns(){
+function cleanUpDatabaseTablesEmptyColumns(){// SQL Generation
     echo "<br/>Starting to clean up DB records inside cleanUpDatabaseTablesEmptyColumns<br/>";
     $connection = DatabaseConnection::getConnection();
     $dbName = DatabaseConnection::getDBName();
