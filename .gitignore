@@ -2,3 +2,4 @@
 
 # scrapped json records should not be uploaded
 /setup/json
+*.code-workspace

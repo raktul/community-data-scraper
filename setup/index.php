@@ -19,7 +19,7 @@ if(!empty($_POST)){
                 unset($streetList[$k]);
             }
         }
-        $result = startScrapingData($streetList, $communityName, $year);
+        startScrapingData($streetList, $communityName, $year);
     }
 }else{
 ?>
